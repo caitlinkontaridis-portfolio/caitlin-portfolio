@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Intelligent Fashion Forecasting · Caitlin Kontaridis</title>
+<meta name="description" content="Master's thesis: computer vision and time-series forecasting on a decade of luxury runway data, tested against fashion diffusion theory. Columbia University." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --oat: #EDE3D2;
+    --oat-deep: #DCCFB6;
+    --paper: #F6EFE0;
+    --espresso: #2B1B12;
+    --espresso-soft: #4A352A;
+    --oxblood: #6E1F22;
+    --oxblood-bright: #8C2A2E;
+    --ink: #1A0F08;
+    --rule: rgba(43, 27, 18, 0.18);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 400;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  .sticky-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--ink);
+    color: var(--paper);
+    border-bottom: 1px solid var(--rule);
+    padding: 12px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .sticky-bar a { color: var(--paper); text-decoration: none; transition: color 0.2s ease; }
+  .sticky-bar .home {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--oat-deep);
+  }
+  .sticky-bar .home:hover { color: var(--oxblood-bright); }
+  .sticky-bar .quicklinks { display: flex; gap: 28px; align-items: center; }
+  .sticky-bar .quicklinks a {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--paper);
+  }
+  .sticky-bar .quicklinks a:hover { color: var(--oxblood-bright); }
+  .sticky-bar .quicklinks a.primary {
+    background: var(--oxblood-bright); padding: 7px 14px; color: var(--paper);
+  }
+  .sticky-bar .quicklinks a.primary:hover { background: var(--paper); color: var(--ink); }
+
+  .thesis-hero-page {
+    padding: 100px 48px 60px;
+    border-bottom: 3px double var(--ink);
+  }
+  .thesis-hero-page .wrap { max-width: 1000px; margin: 0 auto; }
+  .eyebrow {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--oxblood); margin-bottom: 24px;
+  }
+  h1 {
+    font-family: 'Cormorant Garamond', serif; font-weight: 400;
+    font-size: clamp(38px, 5.6vw, 68px);
+    line-height: 1.02; letter-spacing: -0.015em;
+    color: var(--ink); margin-bottom: 28px;
+  }
+  h1 em { font-style: italic; font-weight: 300; color: var(--oxblood); }
+  .subtitle {
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-weight: 300; font-size: clamp(20px, 2.2vw, 26px);
+    color: var(--espresso-soft); line-height: 1.5;
+    max-width: 760px; margin-bottom: 32px;
+  }
+  .hero-meta {
+    display: flex; gap: 36px; flex-wrap: wrap;
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--espresso); padding-top: 28px;
+    border-top: 1px solid var(--rule);
+  }
+  .hero-meta span strong { color: var(--oxblood); font-weight: 500; }
+
+  .section { padding: 80px 48px; max-width: 1100px; margin: 0 auto; }
+  .section-label {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--oxblood); margin-bottom: 20px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .section-label::after {
+    content: ''; flex: 1; height: 1px; background: var(--oxblood); opacity: 0.4;
+  }
+  h2 {
+    font-family: 'Cormorant Garamond', serif; font-weight: 400;
+    font-size: clamp(30px, 4vw, 46px); line-height: 1.1;
+    letter-spacing: -0.01em; color: var(--ink);
+    margin-bottom: 28px; max-width: 880px;
+  }
+  h2 em { font-style: italic; font-weight: 300; color: var(--oxblood); }
+
+  .prose p {
+    font-size: 18px; line-height: 1.65; color: var(--espresso);
+    margin-bottom: 22px; max-width: 720px;
+  }
+  .prose strong { font-weight: 500; color: var(--ink); }
+  .prose em { font-style: italic; color: var(--oxblood); }
+
+  .stats-inset {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;
+    margin: 36px 0 0; padding: 28px 0 0;
+    border-top: 1px solid var(--rule);
+  }
+  .stats-inset .stat { text-align: center; }
+  .stats-inset .stat .num {
+    font-family: 'Cormorant Garamond', serif; font-weight: 400;
+    font-size: 48px; line-height: 1; color: var(--oxblood);
+    letter-spacing: -0.02em;
+  }
+  .stats-inset .stat .label {
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--espresso); margin-top: 10px; line-height: 1.4;
+  }
+
+  .pipeline-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
+    margin-top: 40px; border-top: 1px solid var(--rule);
+  }
+  .stage {
+    padding: 28px 22px;
+    border-bottom: 1px solid var(--rule);
+    border-right: 1px solid var(--rule);
+  }
+  .stage:nth-child(4n) { border-right: none; }
+  .stage .num {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    color: var(--oxblood); letter-spacing: 0.22em; margin-bottom: 10px;
+  }
+  .stage h4 {
+    font-family: 'Cormorant Garamond', serif; font-weight: 500;
+    font-size: 22px; line-height: 1.15; margin-bottom: 8px; color: var(--ink);
+  }
+  .stage p { font-size: 14px; line-height: 1.5; color: var(--espresso-soft); }
+
+  .method-section { background: var(--oat); padding: 80px 48px; }
+  .method-section .wrap { max-width: 1200px; margin: 0 auto; }
+  .method-pair {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 36px;
+  }
+  .method-card {
+    background: #FFFFFF; padding: 20px;
+    border: 1px solid var(--rule);
+  }
+  .method-card img { width: 100%; height: auto; display: block; }
+  .method-card .label {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--oxblood); margin-bottom: 12px;
+  }
+  .method-card .cap {
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 17px; color: var(--espresso-soft); margin-top: 14px; line-height: 1.45;
+  }
+
+  .insight-box {
+    margin-top: 36px; padding: 28px 32px;
+    background: var(--espresso); color: var(--paper);
+    border-left: 4px solid var(--oxblood-bright);
+  }
+  .insight-box .l {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--oxblood-bright); margin-bottom: 10px;
+  }
+  .insight-box p {
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 20px; line-height: 1.5; color: var(--paper);
+    margin: 0; max-width: none;
+  }
+
+  .models-list {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 32px;
+  }
+  .model-card {
+    padding: 24px 22px; background: var(--oat);
+    border-top: 3px solid var(--oxblood);
+  }
+  .model-card .name {
+    font-family: 'Cormorant Garamond', serif; font-size: 24px;
+    font-weight: 500; color: var(--ink); margin-bottom: 6px;
+  }
+  .model-card .kind {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--oxblood); margin-bottom: 10px;
+  }
+  .model-card .desc { font-size: 15px; line-height: 1.55; color: var(--espresso-soft); }
+
+  .findings-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 36px;
+  }
+  .finding-card {
+    padding: 28px 24px; background: #FFFFFF;
+    border: 1px solid var(--rule); border-top: 3px solid var(--oxblood);
+  }
+  .finding-card .l {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--oxblood); margin-bottom: 12px;
+  }
+  .finding-card h4 {
+    font-family: 'Cormorant Garamond', serif; font-weight: 500;
+    font-size: 24px; line-height: 1.15; color: var(--ink); margin-bottom: 14px;
+  }
+  .finding-card h4 em { font-style: italic; font-weight: 300; color: var(--oxblood); }
+  .finding-card p { font-size: 15px; line-height: 1.55; color: var(--espresso-soft); }
+  .finding-card .verdict {
+    margin-top: 18px; padding-top: 14px;
+    border-top: 1px dashed var(--rule);
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 16px; color: var(--ink); line-height: 1.5;
+  }
+  .finding-card .verdict em { font-style: normal; color: var(--oxblood); }
+  .finding-card .verdict strong { font-weight: 600; color: var(--ink); font-style: normal; }
+
+  .chart-card {
+    background: #FFFFFF; padding: 24px;
+    border: 1px solid var(--rule); margin-top: 36px;
+  }
+  .chart-card img { width: 100%; height: auto; display: block; }
+  .chart-card .cap {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--espresso-soft); margin-top: 16px; text-align: center;
+  }
+
+  .atlas-cta {
+    margin-top: 50px; padding: 32px 36px;
+    background: var(--espresso); color: var(--paper);
+    text-decoration: none; display: flex;
+    justify-content: space-between; align-items: center;
+    border-left: 4px solid var(--oxblood-bright);
+    transition: background 0.25s ease, padding 0.25s ease;
+  }
+  .atlas-cta:hover { background: var(--ink); padding-left: 44px; }
+  .atlas-cta .left { flex: 1; }
+  .atlas-cta .label {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--oxblood-bright); margin-bottom: 10px;
+  }
+  .atlas-cta .title {
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 26px; color: var(--paper); margin-bottom: 6px;
+  }
+  .atlas-cta .desc {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.18em; color: var(--oat-deep); text-transform: uppercase;
+  }
+  .atlas-cta .arrow {
+    color: var(--oxblood-bright); font-size: 24px;
+    font-family: 'Cormorant Garamond', serif;
+    margin-left: 20px; transition: transform 0.25s ease;
+  }
+  .atlas-cta:hover .arrow { transform: translateX(8px); }
+
+  .back-cta {
+    background: var(--espresso); color: var(--paper);
+    padding: 80px 48px; text-align: center;
+  }
+  .back-cta h2 {
+    color: var(--paper); margin: 0 auto 24px;
+    font-weight: 300; text-align: center;
+  }
+  .back-cta h2 em { color: var(--oxblood-bright); }
+  .back-cta .sub {
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-weight: 300; font-size: 20px;
+    color: rgba(246, 239, 224, 0.75);
+    max-width: 560px; margin: 0 auto 36px; line-height: 1.5;
+  }
+  .back-cta a {
+    display: inline-block; padding: 14px 32px;
+    border: 1px solid var(--oat-deep); color: var(--paper);
+    text-decoration: none; font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+  .back-cta a:hover { background: var(--oxblood-bright); border-color: var(--oxblood-bright); }
+
+  footer {
+    background: var(--ink); color: rgba(246, 239, 224, 0.5);
+    padding: 28px 48px; display: flex;
+    justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.2em; text-transform: uppercase;
+  }
+
+  @media (max-width: 860px) {
+    .sticky-bar { padding: 10px 16px; }
+    .sticky-bar .quicklinks { gap: 12px; }
+    .sticky-bar .quicklinks a { font-size: 9px; letter-spacing: 0.15em; }
+    .sticky-bar .quicklinks a.primary { padding: 6px 10px; }
+    .thesis-hero-page { padding: 50px 24px 36px; }
+    .section { padding: 50px 24px; }
+    .method-section { padding: 50px 24px; }
+    .method-pair { grid-template-columns: 1fr; }
+    .pipeline-grid { grid-template-columns: 1fr 1fr; }
+    .stage:nth-child(2n) { border-right: none; }
+    .stage:nth-child(2n+1) { border-right: 1px solid var(--rule); }
+    .models-list { grid-template-columns: 1fr; }
+    .findings-grid { grid-template-columns: 1fr; }
+    .stats-inset { grid-template-columns: 1fr 1fr; gap: 20px; }
+    .stats-inset .stat .num { font-size: 38px; }
+    .atlas-cta { flex-direction: column; align-items: flex-start; gap: 14px; padding: 26px; }
+    .atlas-cta .arrow { margin-left: 0; }
+    .back-cta { padding: 50px 24px; }
+    footer { padding: 20px 24px; flex-direction: column; gap: 8px; text-align: center; }
+    .hero-meta { gap: 20px; font-size: 9px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="sticky-bar">
+  <a href="index.html" class="home">&larr; Caitlin Kontaridis</a>
+  <div class="quicklinks">
+    <a href="mailto:caitlin.kontaridis@gmail.com">Email</a>
+    <a href="https://www.linkedin.com/in/caitlin-kontaridis-38a1a4243/" target="_blank" rel="noopener">LinkedIn</a>
+    <a class="primary" href="https://drive.google.com/file/d/17B6F_rjknshdaF8f-frgrmVaF3jIpKqw/view?usp=sharing" target="_blank" rel="noopener">Resume &rarr;</a>
+  </div>
+</nav>
+
+<section class="thesis-hero-page">
+  <div class="wrap">
+    <div class="eyebrow">Master's Thesis &middot; May 2026 &middot; Columbia University GSAS</div>
+    <h1>Intelligent Fashion Forecasting:<br><em>AI, Computer Vision, and Fashion Diffusion.</em></h1>
+    <p class="subtitle">A computational pipeline that extracts visual attributes from a decade of luxury runway imagery and tests three foundational theories of how trends actually spread.</p>
+    <div class="hero-meta">
+      <span><strong>Advisor:</strong> Dr. Lilian Ajayi Ore</span>
+      <span><strong>Program:</strong> Quantitative Methods in the Social Sciences</span>
+      <span><strong>Period:</strong> FW2016 &mdash; FW2026</span>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-label">Premise</div>
+  <h2>One decision &mdash; <em>retro blue or cherry lacquer</em> &mdash; moves millions of dollars.</h2>
+  <div class="prose">
+    <p>The fashion industry projects $957 billion in revenue in 2026, and most of its biggest decisions are still made qualitatively. A small group of experts at firms like WGSN and Pantone watches runways, street style, social media, and cultural movements, then synthesizes what is rising. The expertise is real &mdash; but it is expensive, slow to validate, and operating against a media environment that now produces millions of stylistic signals per day.</p>
+    <p>My thesis asks whether the same task can be approached <em>computationally and at scale</em>: can a machine learning pipeline extract the same kind of structured signal from runway photography &mdash; color palettes, silhouettes, aesthetic categories &mdash; and use those signals to forecast future seasons? And critically: <strong>do the resulting forecasts behave the way three foundational diffusion theories say fashion trends should behave?</strong></p>
+  </div>
+
+  <div class="stats-inset">
+    <div class="stat">
+      <div class="num">48,534</div>
+      <div class="label">Runway Images</div>
+    </div>
+    <div class="stat">
+      <div class="num">50</div>
+      <div class="label">Luxury Brands</div>
+    </div>
+    <div class="stat">
+      <div class="num">22</div>
+      <div class="label">Seasons (FW2016 &mdash; FW2026)</div>
+    </div>
+    <div class="stat">
+      <div class="num">5</div>
+      <div class="label">Brand Tiers</div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-label">Pipeline</div>
+  <h2>Four stages, end to end in Python.</h2>
+  <p class="prose" style="margin-bottom: 0;">The full pipeline runs on Google Colab and is fully reproducible.</p>
+
+  <div class="pipeline-grid">
+    <div class="stage">
+      <div class="num">01</div>
+      <h4>Collection</h4>
+      <p>Scraped Tagwalk for 48,534 runway looks across 50 brands and 22 seasons using BeautifulSoup, rate-limiting, and retry logic.</p>
+    </div>
+    <div class="stage">
+      <div class="num">02</div>
+      <h4>Segmentation</h4>
+      <p>Applied SegFormer-B2 garment segmentation to isolate clothing from background, lighting, and model bias.</p>
+    </div>
+    <div class="stage">
+      <div class="num">03</div>
+      <h4>Feature Extraction</h4>
+      <p>Weighted k-means in CIELAB color space (k=5) for palette; zero-shot CLIP across 53 labels for silhouette, aesthetic, and design attributes.</p>
+    </div>
+    <div class="stage">
+      <div class="num">04</div>
+      <h4>Forecasting</h4>
+      <p>Four models benchmarked on a 16-train / 6-test seasonal split, with Granger causality and STL decomposition for diffusion analysis.</p>
+    </div>
+  </div>
+</section>
+
+<section class="method-section">
+  <div class="wrap">
+    <div class="section-label">Methodology &middot; Why Segmentation Matters</div>
+    <h2>Extracting color from <em>the garment</em>, not the runway.</h2>
+    <div class="prose">
+      <p>One early finding shaped the rest of the pipeline. When color clustering is applied directly to a raw runway image, the largest cluster is almost always the runway floor, the stage lighting, or the model's skin tone &mdash; <strong>not</strong> the garment. The signal that matters is buried under noise.</p>
+      <p>Segmenting the garment first &mdash; using SegFormer-B2 to isolate the look from everything around it &mdash; is what makes the color signal real. The same Chanel FW2016 look, processed both ways, makes this concrete:</p>
+    </div>
+
+    <div class="method-pair">
+      <div class="method-card">
+        <div class="label">Fig. A &middot; Before Segmentation</div>
+        <img src="thesis-02a-before.png" alt="Color extraction from raw runway image, before garment segmentation — palette is biased toward background and skin tones" />
+        <p class="cap">Largest cluster: light beige (43.9%). The runway floor and audience dominate the palette &mdash; the iconic Chanel pink reads as the second cluster at just 17.9%.</p>
+      </div>
+      <div class="method-card">
+        <div class="label">Fig. B &middot; After Segmentation</div>
+        <img src="thesis-02b-after.png" alt="Color extraction from the same look after garment segmentation — palette now reflects the garment itself" />
+        <p class="cap">Largest cluster: Chanel pink (44.1%). The five-cluster palette now reads as a coherent pink family across raspberry, rose, and burgundy &mdash; the actual color story of the look.</p>
+      </div>
+    </div>
+
+    <div class="insight-box">
+      <div class="l">Why this matters</div>
+      <p>Segmentation is not a preprocessing detail. It is the single decision that determines whether the rest of the pipeline measures fashion or measures lighting.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-label">Forecasting</div>
+  <h2>Four models, benchmarked.</h2>
+  <p class="prose">Fashion attributes have different statistical properties: silhouette and aesthetic proportions are bounded between 0 and 1, while CIELAB color coordinates are continuous and can drift. I benchmarked classical statistical models against deep learning to see which class of model handles which kind of signal.</p>
+
+  <div class="models-list">
+    <div class="model-card">
+      <div class="kind">Classical &middot; Baseline</div>
+      <div class="name">ARIMA</div>
+      <div class="desc">Optimal parameters selected per brand-attribute via AIC. Stationarity tested with Augmented Dickey-Fuller before fitting.</div>
+    </div>
+    <div class="model-card">
+      <div class="kind">Classical &middot; Robust to Gaps</div>
+      <div class="name">Prophet</div>
+      <div class="desc">Additive decomposition with changepoint detection. Well-suited to the semi-annual rhythm of fashion seasons.</div>
+    </div>
+    <div class="model-card">
+      <div class="kind">Deep Learning</div>
+      <div class="name">LSTM</div>
+      <div class="desc">Recurrent neural network trained on four-season input windows. Captures non-linear dependencies across seasons.</div>
+    </div>
+    <div class="model-card">
+      <div class="kind">Deep Learning &middot; Attention</div>
+      <div class="name">Attention-LSTM</div>
+      <div class="desc">LSTM with attention. Weights past seasons by relevance &mdash; the most complex model in the benchmark.</div>
+    </div>
+  </div>
+
+  <div class="insight-box" style="margin-top: 40px;">
+    <div class="l">Key Finding</div>
+    <p>Model performance depends on attribute type, not model complexity. Classical models win on proportions (ARIMA mean MAE = 0.09); deep learning wins on continuous color (Attention-LSTM mean MAE = 0.79).</p>
+  </div>
+</section>
+
+<section class="section" style="padding-top: 0;">
+  <div class="section-label">Industry Signal</div>
+  <h2>What the pipeline <em>sees</em> across a decade.</h2>
+  <p class="prose">Aggregated across all 50 designers, the pipeline surfaces structural shifts in the industry &mdash; not just brand-level noise. Quiet luxury and minimalist aesthetics rose from roughly 12% to 27% over the study period, and tailored silhouettes show clear upward trajectory across the decade. These findings were simultaneously observed by industry analysts during the same period, externally validating the computational approach.</p>
+
+  <div class="chart-card">
+    <img src="thesis-03-trends.png" alt="Industry-level fashion trends, SS2016 to FW2026 — mean lightness, mean chroma, tailored silhouette proportion, and minimalist aesthetic proportion across all brands" />
+    <p class="cap">Industry-level signal vs. individual-brand variance, FW2016 &mdash; FW2026</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-label">Diffusion Theory &middot; Three Tests</div>
+  <h2>Do fashion trends behave the way the theory says?</h2>
+  <p class="prose">Three foundational theories explain how fashion trends spread. I tested all three quantitatively at this scale &mdash; using Granger causality, cross-tier correlations, and STL decomposition &mdash; on the pipeline's extracted attributes.</p>
+
+  <div class="findings-grid">
+    <div class="finding-card">
+      <div class="l">Test 01 &middot; Vertical Diffusion</div>
+      <h4><em>Trickle-Down</em> Theory</h4>
+      <p>Do trends start in elite Tier 1 houses (French maisons) and trickle down to lower tiers? Tested with Granger causality across 128 brand-attribute-lag combinations.</p>
+      <div class="verdict"><em>Partial support &mdash;</em> operates selectively. Strongest for <strong>minimalist aesthetic</strong> and quiet luxury. Notably absent for Tier 4 (avant-garde houses like Margiela), which operate outside the hierarchy.</div>
+    </div>
+    <div class="finding-card">
+      <div class="l">Test 02 &middot; Horizontal Diffusion</div>
+      <h4><em>Trickle-Across</em> Theory</h4>
+      <p>Do trends spread simultaneously across tiers, driven by media exposure rather than social hierarchy? Tested with cross-tier Pearson correlations at zero lag.</p>
+      <div class="verdict"><em>Strong support &mdash;</em> all 10 tier pairs significant for voluminous silhouette (mean r = 0.705). <strong>Silhouettes trickle across; aesthetics trickle down.</strong></div>
+    </div>
+    <div class="finding-card">
+      <div class="l">Test 03 &middot; Temporal Cycles</div>
+      <h4><em>Cyclical</em> Theory</h4>
+      <p>Do trends move in recurring cycles &mdash; bright in Spring/Summer, dark in Fall/Winter, with longer aesthetic pendulum swings? Tested with STL decomposition and spectral analysis.</p>
+      <div class="verdict"><em>Confirmed for short cycles &mdash;</em> 1-year SS/FW color oscillation. Maximalism peaked FW2022; quiet luxury rose after. 22 seasons too short to confirm 3-7 year macro-cycles.</div>
+    </div>
+  </div>
+
+  <div class="insight-box" style="margin-top: 40px;">
+    <div class="l">Two-Speed Diffusion</div>
+    <p>The clearest theoretical finding: aesthetics trickle down vertically while silhouettes trickle across horizontally &mdash; at the same time. Fashion does not have a single diffusion mechanism. It has at least two, operating in parallel on different visual attributes.</p>
+  </div>
+</section>
+
+<section class="section" style="padding-top: 0;">
+  <div class="section-label">Explore the Data</div>
+  <h2>An interactive atlas of every trend.</h2>
+  <p class="prose">The full dataset is available as an interactive visualization. Filter by brand, tier, season, and attribute &mdash; and compare predicted versus observed palettes for the test seasons.</p>
+
+  <a class="atlas-cta" href="https://caitlinkontaridis-portfolio.github.io/runway_trend_atlas/" target="_blank" rel="noopener">
+    <div class="left">
+      <div class="label">Interactive Visualization</div>
+      <div class="title">Runway Trend Atlas</div>
+      <div class="desc">caitlinkontaridis-portfolio.github.io/runway_trend_atlas</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+  </a>
+</section>
+
+<section class="back-cta">
+  <h2>Want to talk about <em>any of this</em>?</h2>
+  <p class="sub">If your team works on trend, planning, analytics, or computer vision in fashion, I would love to hear from you.</p>
+  <a href="index.html#connect">Get in touch &rarr;</a>
+</section>
+
+<footer>
+  <span>Caitlin Kontaridis &middot; New York City</span>
+  <span>Thesis &middot; Columbia University GSAS &middot; May 2026</span>
+</footer>
+
+</body>
+</html>
